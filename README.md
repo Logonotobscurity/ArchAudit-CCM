@@ -51,9 +51,14 @@ make run-sample
 
 ## Demo
 
-<!-- Placeholder for screencli / terminal recording -->
-<!-- Record with: npx screencli record <docs-url> -p "Show the audit pack generation and metrics" -->
-<!-- Or use asciinema + agg for CLI output -->
+<!-- 
+Record a CLI demo with asciinema:
+  asciinema rec demo.cast
+  # run make run-sample
+  agg demo.cast demo.gif
+Or for a web docs site later:
+  npx screencli record <url> -p "Show audit pack generation and metrics"
+-->
 
 > Demo GIF coming soon. For now, run `make run-sample` and inspect `samples/audit_pack/`.
 
@@ -70,8 +75,9 @@ Governance plane (exceptions, dual control) is Phase 2. Regional packs and OSCAL
 - [AgentBridge-Africa](https://github.com/Logonotobscurity/AgentBridge-Africa)
 - [GigPilot](https://github.com/Logonotobscurity/GigPilot)
 
-## Visual assets to add
+## Visual assets checklist
 
-1. Social preview image (1280×640) via repo Settings → Social preview (use Socialify or custom).
-2. Demo GIF of `make run-sample` output (asciinema + agg recommended for CLI).
-3. Architecture diagram export if Mermaid rendering needs a static fallback.
+- [ ] Social preview image (1280×640 PNG/JPG < 1 MB) — repo Settings → Social preview (Socialify or custom)
+- [ ] Demo GIF (600–800 px, 5–15 s, < 5 MB) of `make run-sample` (asciinema + agg recommended)
+- [ ] Optional logo in `docs/assets/` (transparent PNG, works in dark/light)
+- [ ] Architecture diagram static fallback if Mermaid is insufficient
