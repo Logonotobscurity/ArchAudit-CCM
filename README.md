@@ -6,7 +6,6 @@
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?style=flat)]()
 [![Pydantic](https://img.shields.io/badge/Pydantic-v2-green?style=flat)]()
-[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat)]()
 [![Status](https://img.shields.io/badge/Status-evidence--native%20CCM-brightgreen?style=flat)]()
 
 ---
