@@ -1,8 +1,9 @@
 # ArchAudit CCM
 
 <p align="center">
-  <strong>Evidence-native Continuous Control Monitor</strong><br/>
-  Deterministic-first · Typed contracts · Fully replayable
+  <strong>Evidence-native · Deterministic-first Continuous Control Monitor</strong><br/>
+  Typed contracts · Hash-aware skip · Fully replayable audit packs<br/>
+  for African operating environments
 </p>
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?style=flat)]()
@@ -14,32 +15,34 @@
 
 ## What problem does this solve?
 
-Control evidence goes stale. Teams cannot produce a measurable audit pack (Coverage % + Time-to-Evidence) without manual screenshot hunts. ArchAudit turns evidence collection into a deterministic, hash-aware, offline-replayable loop.
+Control evidence goes stale. Teams cannot produce a measurable audit pack (Coverage % + Time-to-Evidence) without manual screenshot hunts. ArchAudit makes evidence the source of truth: adapters return typed Evidence only, deterministic rules evaluate first, and every run produces a fully replayable pack.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  A[ingest_run] --> B[collect]
-  B --> C{maybe_skip<br/>hash match?}
-  C -->|no| D[evaluate]
+  A[ingest_run<br/>control pack + budget] --> B[collect<br/>typed Evidence only]
+  B --> C{maybe_skip<br/>content_hash match?}
+  C -->|no| D[evaluate<br/>deterministic rules]
   C -->|yes| E[report]
-  D --> F[drift]
+  D --> F[drift<br/>materiality]
   F --> E
-  E --> G[audit pack<br/>summary.md + metrics]
+  E --> G[audit pack<br/>summary.md + metrics.json]
 ```
+
+Aligned with ADR-001 v3: evidence-native contracts, governance plane phased, regional packs as data.
 
 **Stack:** Python 3.11+ · Pydantic v2 · PyYAML · pytest  
 Optional LangGraph-shaped orchestration. MCP-shaped tool envelopes.
 
 ## What is implemented
 
-- Six-layer pipeline: Intake → Collection → Skip → Evaluation → Drift → Reporting
-- Pydantic v2 contracts for Evidence, Evaluation, Drift
-- YAML control pack (Access, Change, Logging families)
+- Pipeline: ingest_run → collect → maybe_skip → evaluate → drift → report
+- Pydantic v2 Evidence / Evaluation / Drift contracts
+- YAML control pack (Access, Change, Logging)
 - Content-hash skip gate
-- Sample audit pack with metrics
-- ADR trail (v2 → v3) and technical specification
+- Sample audit pack with Coverage % and Time-to-Evidence
+- Full ADR trail and technical specification
 
 ## Quick start
 
@@ -52,19 +55,19 @@ make run-sample
 ## Demo
 
 <!-- 
-Record a CLI demo with asciinema:
+CLI demo (recommended):
   asciinema rec demo.cast
-  # run make run-sample
+  make run-sample
   agg demo.cast demo.gif
-Or for a web docs site later:
-  npx screencli record <url> -p "Show audit pack generation and metrics"
+Web docs later:
+  npx screencli record <url> -p "Show the audit pack generation and metrics"
 -->
 
-> Demo GIF coming soon. For now, run `make run-sample` and inspect `samples/audit_pack/`.
+> Demo GIF coming soon. Run `make run-sample` and inspect `samples/audit_pack/`.
 
 ## Portfolio value
 
-Demonstrates evidence-first design, deterministic rules over agent judgments, and machine-readable control packs suitable for African GRC and security engineering contexts.
+Evidence-first design for African GRC and security contexts. Deterministic rules over agent judgments. Machine-readable control packs.
 
 ## Limitations
 
@@ -77,7 +80,6 @@ Governance plane (exceptions, dual control) is Phase 2. Regional packs and OSCAL
 
 ## Visual assets checklist
 
-- [ ] Social preview image (1280×640 PNG/JPG < 1 MB) — repo Settings → Social preview (Socialify or custom)
-- [ ] Demo GIF (600–800 px, 5–15 s, < 5 MB) of `make run-sample` (asciinema + agg recommended)
-- [ ] Optional logo in `docs/assets/` (transparent PNG, works in dark/light)
-- [ ] Architecture diagram static fallback if Mermaid is insufficient
+- [ ] Social preview (1280×640) — Settings → Social preview
+- [ ] Demo GIF of sample run (asciinema + agg)
+- [ ] Logo in `docs/assets/` (transparent PNG, dark/light compatible)
