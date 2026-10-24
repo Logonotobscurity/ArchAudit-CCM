@@ -1,9 +1,7 @@
 # ArchAudit CCM
 
 <p align="center">
-  <strong>Evidence-native · Deterministic-first Continuous Control Monitor</strong><br/>
-  Typed contracts · Hash-aware skip · Fully replayable audit packs<br/>
-  for African operating environments
+  <img src="docs/assets/social-preview.svg" alt="ArchAudit CCM: evidence-native, deterministic-first continuous control monitoring" width="100%" />
 </p>
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?style=flat)]()
