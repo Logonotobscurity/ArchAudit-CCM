@@ -1,0 +1,8 @@
+# Sample fixtures for rules
+fixtures:
+  admin_mfa: true
+  operator_mfa: true
+  main_protected: true
+  prod_change_has_ticket: true
+  app_log_retention_days: 45
+  auth_log_retention_days: 90
