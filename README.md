@@ -1,2 +1,13 @@
-# ArchAudit-CCM
-Continuous Control Monitor (CCM): evidence-native, deterministic-first control monitoring with typed evidence contracts for African operating environments.
+# ArchAudit CCM
+
+Continuous Control Monitor: evidence-native, deterministic-first continuous control monitoring for African operating environments.
+
+## Quick start
+
+```bash
+pip install -r requirements.txt
+make test
+make run-sample
+```
+
+See DEVELOPMENT.md and docs/ for architecture and ADRs.
