@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "data": {
+    "retention_days": 45,
+    "ok": true
+  },
+  "error_code": null,
+  "latency_ms": 0,
+  "content_hash": "example"
+}

@@ -8,3 +8,9 @@ ingest → collect → skip → evaluate → drift → report. Sample pack gener
 
 ## M2 — Governance plane
 Exceptions with dual control, TTL, owner. `govern_check` node.
+
+## M3 — Regional packs + events
+NG/KE adapters as packs; optional webhook intake.
+
+## M4 — OSCAL export
+Assessment results machine-readable.

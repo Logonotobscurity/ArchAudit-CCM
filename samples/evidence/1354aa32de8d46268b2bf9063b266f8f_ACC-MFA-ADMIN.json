@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "data": {
+    "role": "admin",
+    "found": true,
+    "mfa_required": true,
+    "mfa_enforced": true,
+    "ok": true
+  },
+  "error_code": null,
+  "latency_ms": 0,
+  "content_hash": "2aaf3014ef8a035eac5b93ff65f42659919120e96872fc6e2948fb54f0f027a5"
+}
