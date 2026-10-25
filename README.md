@@ -49,18 +49,28 @@ make test
 make run-sample
 ```
 
-## Demo
+## Reproducible terminal demo
 
-<!-- 
-CLI demo (recommended):
-  asciinema rec demo.cast
-  make run-sample
-  agg demo.cast demo.gif
-Web docs later:
-  npx screencli record <url> -p "Show the audit pack generation and metrics"
--->
+Run this from the repository root after installing the dependencies:
 
-> Demo GIF coming soon. Run `make run-sample` and inspect `samples/audit_pack/`.
+```bash
+pip install -r requirements.txt
+make run-sample
+```
+
+The pipeline writes its sample audit pack to `samples/audit_pack/`. Inspect the generated summary and metrics there; use `make test` to run the test suite.
+
+To record a short terminal demo with [asciinema](https://asciinema.org/) and [agg](https://github.com/asciinema/agg):
+
+```bash
+asciinema rec docs/assets/archaudit-demo.cast
+make run-sample
+# Stop recording with Ctrl+D, then convert the cast to GIF with agg.
+agg docs/assets/archaudit-demo.cast docs/assets/archaudit-demo.gif
+```
+
+Only publish the GIF after checking that the captured output is real, readable, and free of secrets. Keep the cast/GIF small; a static screenshot of the generated audit pack is also acceptable.
+
 
 ## Portfolio value
 
@@ -75,8 +85,8 @@ Governance plane (exceptions, dual control) is Phase 2. Regional packs and OSCAL
 - [AgentBridge-Africa](https://github.com/Logonotobscurity/AgentBridge-Africa)
 - [GigPilot](https://github.com/Logonotobscurity/GigPilot)
 
-## Visual assets checklist
+## Visual assets
 
-- [ ] Social preview (1280×640) — Settings → Social preview
-- [ ] Demo GIF of sample run (asciinema + agg)
-- [ ] Logo in `docs/assets/` (transparent PNG, dark/light compatible)
+- Branded README banner: `docs/assets/social-preview.svg`.
+- Repository social preview: upload the matching 1280×640 PNG through **Settings → General → Social preview**. This setting is separate from the README banner.
+- Optional terminal GIF: record the commands above locally, verify the output, then commit a compressed GIF if useful.
