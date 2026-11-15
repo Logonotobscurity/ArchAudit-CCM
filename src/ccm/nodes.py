@@ -4,6 +4,7 @@ Public vertical slice (Ticket 1): deterministic evaluation against sample eviden
 No hardcoded metrics. Fully offline-replayable.
 
 Ticket 3: exception persistence + dual-control enforcement + decision log.
+Hash-chain: trusted evidence lineage for offline replay and auditor confidence.
 """
 from __future__ import annotations
 
@@ -51,6 +52,21 @@ def _load_evidence_for_control(control_id: str) -> dict[str, Any] | None:
 def _content_hash(payload: dict[str, Any]) -> str:
     raw = json.dumps(payload, sort_keys=True, default=str).encode()
     return hashlib.sha256(raw).hexdigest()
+
+
+def _build_evidence_chain(evidence: list[EvidenceRecord]) -> str:
+    """Simple hash chain over sorted evidence content hashes.
+
+    Deterministic root that can be re-computed on replay to prove the
+    evidence set was not altered. Suitable for offline / localisation contexts.
+    """
+    if not evidence:
+        return hashlib.sha256(b"empty").hexdigest()
+    hashes = sorted(e.content_hash for e in evidence)
+    current = hashlib.sha256(hashes[0].encode()).hexdigest()
+    for h in hashes[1:]:
+        current = hashlib.sha256((current + h).encode()).hexdigest()
+    return current
 
 
 def _eval_rule(rule: str, data: dict[str, Any]) -> tuple[str, str]:
@@ -251,6 +267,10 @@ def report(state: CCMState, output_dir: Path | None = None) -> CCMState:
     pending_actions = sum(1 for a in state.actions if a.status == "pending")
     suppressed = sum(1 for a in state.actions if a.status == "suppressed")
 
+    # Evidence hash-chain root for integrity verification on replay
+    chain_root = _build_evidence_chain(state.evidence)
+    state.metrics["evidence_chain_root"] = chain_root
+
     state.metrics.update({
         "control_coverage_pct": coverage,
         "time_to_evidence_minutes": round(state.metrics.get("_elapsed_s", 0) / 60, 2),
@@ -276,6 +296,7 @@ def report(state: CCMState, output_dir: Path | None = None) -> CCMState:
         "",
         f"Run ID: `{state.run_id}`",
         f"Decision basis: deterministic",
+        f"Evidence chain root: `{chain_root}`",
         "",
         "## Metrics",
         f"- Coverage: **{coverage}%**",
@@ -316,7 +337,7 @@ def run_pipeline(
     output_dir: str | None = None,
     budget_ms: int = 30000,
 ) -> CCMState:
-    """Public entrypoint — deterministic vertical slice + Ticket 3 governance."""
+    """Public entrypoint — deterministic vertical slice + Ticket 3 governance + hash-chain."""
     t0 = time.perf_counter()
     state = CCMState()
     # Load persisted exceptions before evaluation
