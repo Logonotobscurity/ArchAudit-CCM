@@ -27,12 +27,12 @@ These items close the gap between market core promise and current public state, 
 - [x] **Multi-run history & previous-state store**: compact `samples/previous_state.json` snapshot of prior evaluations. Drift now compares status changes and populates `previous_evaluation_id`. Metrics report `previous_run_compared`.
 - [x] **Remediation verification loop**: after emission, the next run re-evaluates the control and marks the ActionRecord `verified` (now passes) or `still_failing`. Metrics report `verified_actions` and `still_failing_actions`. Explicit and auditable.
 - [x] **Live adapters (first production set)**: GitHub branch protection, identity MFA poll, and cloud posture (S3 encryption) adapters. Each has a live-path placeholder gated by credentials and a deterministic offline stub. Tests cover the offline path.
-- [ ] Additional regional overlays (e.g. South Africa POPIA, Ghana or Rwanda).
-- [ ] Production auth & secrets (replace basic-auth stub).
-- [ ] Audit-pack enrichment & extra export options.
-- [ ] Operator journey surface improvements.
+- [x] **Additional regional overlays**: South Africa POPIA (`za.yaml`) and Ghana DPA (`gh.yaml`) added as pure YAML data packs alongside NG and KE.
+- [x] **Production auth & secrets**: API-key authentication via `CCM_API_KEY` environment variable; basic-auth stub remains as local fallback. Documented in runbook.
+- [x] **Audit-pack enrichment**: metrics and summary now include inbound count, previous-run flag, verified/still-failing counters. OSCAL + HTML already present.
+- [x] **Operator journey surface improvements**: static `metrics.html` plus journey_status in API and summary; runbook explains interpretation.
 - [x] **End-to-end offline replay test suite in CI**: `tests/test_offline_replay.py` plus an explicit CI step assert that two consecutive runs produce an identical evidence chain root and that previous-run comparison is active.
-- [ ] Documentation & operator runbook.
+- [x] **Documentation & operator runbook**: `docs/OPERATOR_RUNBOOK.md` covers triggering runs, webhook ingest, journey status, adding regional packs/adapters, offline replay verification, and secrets.
 
 ## Design Constraints (do not violate)
 
@@ -62,4 +62,7 @@ These items close the gap between market core promise and current public state, 
 - [x] Phase 4.2: previous-state store + true drift comparison
 - [x] Phase 4.3: remediation verification loop (verified / still_failing)
 - [x] Phase 4.4: live adapter stubs (GitHub, identity, cloud posture) with offline fallbacks
+- [x] Phase 4.5: additional regional overlays (ZA POPIA, GH DPA)
+- [x] Phase 4.6: production API-key auth
 - [x] Phase 4.9: end-to-end offline replay test suite in CI
+- [x] Phase 4.10: operator runbook
