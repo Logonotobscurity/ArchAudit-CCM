@@ -8,9 +8,9 @@ These items close the gap between market core promise and current public state, 
 - [x] **Ticket 2 — Governance state contracts**: `ExceptionRecord` + `ActionRecord` added to CCMState.
 - [x] **Ticket 3 — `govern_check` node (full)**: exceptions persisted to `samples/exceptions.json`, dual control + TTL enforced, decision log written into the audit pack.
 - [x] **Evidence hash chain / integrity verification on replay** (trusted evidence lineage — root written into metrics and audit pack; supports offline replay, data localisation, and auditor confidence under NDPA/GAID and Kenya constraints).
-- [ ] Materiality thresholds driven from the control pack (not hardcoded).
-- [ ] Outbound action hooks (webhook, simple ticket stub, AgentBridge event emission). Keep actions policy-gated and explicit.
-- [ ] Thin FastAPI `/runs` + basic auth stub so the product can be called by other systems.
+- [x] Materiality thresholds driven from the control pack (not hardcoded).
+- [x] Outbound action hooks (webhook, simple ticket stub, AgentBridge event emission). Keep actions policy-gated and explicit.
+- [x] Thin FastAPI `/runs` + basic auth stub so the product can be called by other systems.
 - [ ] CI: pytest + schema validation in GitHub Actions.
 
 ## Phase 3 — Integrations + Regional Reality
@@ -40,3 +40,4 @@ These items close the gap between market core promise and current public state, 
 - [x] Exception persistence + dual-control governance (Ticket 3)
 - [x] 2026 market + Africa alignment note + Nigeria regional overlay
 - [x] Evidence hash-chain for trusted lineage on replay
+- [x] Materiality from control pack + policy-gated outbound action stubs + Kenya overlay + FastAPI surface
