@@ -20,6 +20,26 @@ Their persistent weaknesses are:
 
 ArchAudit is built for Continuous Control Monitoring in agentic systems and African operating environments. It must adopt the market’s core promise while systematically exploiting the weaknesses above.
 
+### Governance Alignment (ISO 42001 + African context)
+
+**Primary external target: ISO/IEC 42001:2023 (AI Management System).**  
+ISO 42001 is the first certifiable international standard for an AI Management System. It expects:
+- AI system inventory and scope (agents are AI systems),
+- AI risk assessment + AI system impact assessment,
+- life-cycle controls, data controls, human oversight / accountability,
+- continuous monitoring and measurable evidence (Clause 9),
+- continual improvement and corrective action.
+
+ArchAudit’s design maps cleanly to the evidence and governance expectations of an AIMS auditor:
+- typed Evidence + content-hash integrity → continuous, provenance-backed proof,
+- deterministic-first evaluation → reduces opacity risk,
+- explicit `govern_check` (exceptions, dual control, action hooks) → human oversight + corrective action,
+- replayable audit packs (Coverage % + Time-to-Evidence) → the measurable evidence Clause 9 requires.
+
+**Complementary frameworks:** NIST AI RMF (risk language), EU AI Act (legal obligations where applicable). ArchAudit is the continuous evidence substrate, not a full AIMS product or conformity-assessment tool.
+
+**African context (Nov 2026):** Nigeria and Kenya rank among the more mature African AI-governance environments, but almost no binding AI-specific statute yet exists. Governance still rides primarily on data-protection law + national strategies. ArchAudit therefore treats ISO 42001 as the durable technical target and keeps regional packs (NG, KE) as data so future local obligations can be mapped without redesign.
+
 ## Decision
 
 1. **Evidence is the source of truth.**  
@@ -52,6 +72,7 @@ ArchAudit is built for Continuous Control Monitoring in agentic systems and Afri
 - Deterministic-first + typed evidence gives a clear technical story for regulated and African contexts where pure agentic judgment is unacceptable.
 - Explicit action plane + integration surface prevents the product from becoming another closed GRC silo.
 - The public vertical slice (contracts → deterministic evaluation → replayable pack) must be complete and runnable before heavy marketing claims are made.
+- Alignment with ISO 42001 strengthens the FDE / AI+GRC narrative without expanding ArchAudit into a full AIMS product.
 
 ## Alternatives considered
 
