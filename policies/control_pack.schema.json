@@ -14,7 +14,8 @@
           "id": {"type": "string"},
           "family": {"type": "string"},
           "title": {"type": "string"},
-          "rule": {"type": "string"}
+          "rule": {"type": "string"},
+          "materiality": {"type": "string", "enum": ["none", "informational", "material", "urgent"]}
         }
       }
     }
