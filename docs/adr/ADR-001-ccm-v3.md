@@ -1,25 +1,61 @@
-# ADR-001 v3 — Evidence-native CCM
+# ADR-001 v3.1 — Evidence-native CCM with Action Automation
 
 ## Status
-Accepted (2026-09-01)
+Accepted (2026-09-01, realigned 2026-11-15)
 
 ## Context
-Continuous control monitoring for African operating environments needs deterministic-first evaluation, typed evidence, and a path to governance + regional packs without baking in cloud-vendor assumptions.
+
+The 2026 Continuous Control Monitoring market has converged on a clear core promise:
+
+> Always-on proof that controls are operating, continuous evidence collection, and the ability to act when controls fail.
+
+Dominant platforms (ServiceNow IRM agentic CCM, Cyber Sierra, Drata, Vanta, Scytale, Compyl, etc.) deliver this through large integration catalogs, automated tests, and increasingly agentic interpretation + remediation loops.
+
+Their persistent weaknesses are:
+- Evidence is frequently treated as “artifact present” rather than typed, lineage-backed, and fully replayable.
+- Evaluation is often opaque or fully delegated to agents, introducing non-determinism that regulated environments reject.
+- Action/remediation is tightly coupled to the vendor’s workflow engine (high lock-in).
+- Almost no product is designed for African / emerging-market operating realities (connectivity, identity systems, regulatory nuance).
+- High cost and complexity for teams that only need a trustworthy control-monitoring layer.
+
+ArchAudit is built for Continuous Control Monitoring in agentic systems and African operating environments. It must adopt the market’s core promise while systematically exploiting the weaknesses above.
 
 ## Decision
-1. **Evidence is the source of truth.** Adapters return typed Evidence only; no judgments in collection.
-2. **Deterministic rules first.** LLM/agent assistance is policy-gated and recorded as `decision_basis`.
-3. **Contracts over frameworks.** Pydantic v2 schemas for Evidence, Evaluation, Drift, Exception. PyYAML control pack.
-4. **Skip on content hash.** Avoid re-eval when evidence unchanged.
-5. **Governance plane Phase 2.** Exceptions, dual control, TTL, owner.
-6. **Regional packs as data.** NG/KE adapters are YAML packs, not hard-coded.
-7. **Phased OSCAL / events.** Machine-readable assessment later; event-driven collection optional.
+
+1. **Evidence is the source of truth.**  
+   Adapters return typed Evidence only. No judgments are allowed in the collection plane. Every Evidence record carries a content hash and is designed for full offline replay.
+
+2. **Deterministic rules first.**  
+   Evaluation is performed by explicit, versioned rules. Any LLM/agent assistance is policy-gated, optional, and recorded as `decision_basis`. This preserves auditability and avoids the non-determinism risk of pure agentic CCM.
+
+3. **Contracts over frameworks.**  
+   Pydantic v2 schemas for Evidence, Evaluation, Drift, Exception/Action. Control packs remain pure YAML data.
+
+4. **Skip on content hash.**  
+   Avoid re-evaluation when evidence is unchanged. Measurable Time-to-Evidence and Coverage % are first-class outputs.
+
+5. **Governance & Action plane is explicit (Phase 2).**  
+   Exceptions, dual control, TTL, owner, and outbound actions (webhook, ticket, AgentBridge event) live in a dedicated `govern_check` node. Action automation is policy-driven, not hidden inside an agent runtime. This directly attacks the “action is locked inside the vendor platform” weakness.
+
+6. **Integration plane is first-class.**  
+   ArchAudit is designed to emit structured audit packs and events that larger GRC platforms or agentic delivery systems (AgentBridge) can consume. It does not attempt to own the full risk register or remediation UI. This keeps exit cost low and enables coexistence with ServiceNow, Drata, etc.
+
+7. **Regional packs as data.**  
+   NG/KE (and future) operating realities are expressed as YAML packs, not hard-coded adapters. This is currently unique in the category.
+
+8. **Phased OSCAL / events.**  
+   Machine-readable assessment export and event-driven collection remain on the roadmap; they are not required for the core promise.
 
 ## Consequences
-- Replayable sample packs.
-- Clear separation: collection purity vs evaluation rules.
+
+- ArchAudit can honestly claim the same core market promise (continuous proof + action) while remaining lighter, more auditable, and more portable than the dominant platforms.
+- Deterministic-first + typed evidence gives a clear technical story for regulated and African contexts where pure agentic judgment is unacceptable.
+- Explicit action plane + integration surface prevents the product from becoming another closed GRC silo.
+- The public vertical slice (contracts → deterministic evaluation → replayable pack) must be complete and runnable before heavy marketing claims are made.
 
 ## Alternatives considered
-- Full LangGraph dependency (kept optional).
-- Immediate OSCAL (deferred).
-- Agent-first judgments (rejected; deterministic-first).
+
+- Full agentic evaluation as primary path → rejected (non-determinism + auditability risk).
+- Building a complete GRC suite → rejected (wrong scope; high competition; loses differentiation).
+- Immediate deep integration catalog → deferred (correctness of contracts and evaluation comes first).
+- Cloud-vendor-centric assumptions → rejected (incompatible with African operating context goal).
