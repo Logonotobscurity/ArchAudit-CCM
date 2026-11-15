@@ -1,0 +1,27 @@
+# Regional overlay — Nigeria (NDPA 2023 + GAID 2025)
+# Pure data. Loaded optionally alongside the base control pack.
+# Aligns evidence expectations with continuous monitoring and human oversight requirements.
+
+version: "1.0"
+jurisdiction: NG
+frameworks:
+  - NDPA-2023
+  - GAID-2025
+
+controls:
+  - id: NG-AI-MONITOR
+    title: Continuous monitoring of AI / emerging technology once deployed
+    rule: "ai_continuous_monitoring_enabled == true"
+    note: "GAID expects continuous monitoring and evaluation after deployment."
+  - id: NG-AI-HUMAN-OVERSIGHT
+    title: Human intervention path for automated decisions with significant effects
+    rule: "automated_decision_human_intervention_available == true"
+    note: "NDPA right not to be subject to solely automated decisions with legal or similar effects; human review path required."
+  - id: NG-AI-DPIA
+    title: DPIA completed and recorded before high-risk AI processing
+    rule: "dpia_completed == true"
+    note: "Mandatory for profiling, automated decisions, new technologies, digital financial services, etc."
+  - id: NG-DATA-LOCALISATION
+    title: Payment / regulated data residency meets CBN localisation expectation
+    rule: "payment_data_local_residency == true"
+    note: "CBN January 2027 deadline context for payment transaction data."
