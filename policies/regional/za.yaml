@@ -1,0 +1,27 @@
+# Regional overlay — South Africa (POPIA 2013)
+# Pure data. Loaded optionally alongside the base control pack.
+# Aligns with security safeguards, breach notification, and emerging AI/continuous monitoring expectations.
+
+version: "1.0"
+jurisdiction: ZA
+frameworks:
+  - POPIA-2013
+  - InfoReg-Guidance-2026
+
+controls:
+  - id: ZA-SECURITY-SAFEGUARDS
+    title: Appropriate technical and organisational measures to protect personal information
+    rule: "security_safeguards_implemented == true"
+    note: "Section 19: reasonable measures against loss, damage, unauthorised access or processing."
+  - id: ZA-BREACH-NOTIFY
+    title: Breach notification process meets Information Regulator and data-subject requirements
+    rule: "breach_notification_process_ready == true"
+    note: "Section 22: notify Information Regulator and affected data subjects as soon as reasonably possible after discovery of compromise."
+  - id: ZA-AI-MONITOR
+    title: Continuous monitoring of systems processing personal information (including AI-assisted)
+    rule: "ai_continuous_monitoring_enabled == true"
+    note: "Supports ongoing reasonableness of safeguards as threats evolve; aligns with ISO 42001 continuous evaluation expectations."
+  - id: ZA-DPIA
+    title: Impact assessment completed for high-risk processing
+    rule: "dpia_completed == true"
+    note: "Recommended for new technologies, large-scale or sensitive processing; supports accountability principle."
