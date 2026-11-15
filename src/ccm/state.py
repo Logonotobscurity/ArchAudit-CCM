@@ -4,6 +4,7 @@ Aligned with ISO 42001 evidence and governance expectations:
 - typed Evidence with content_hash supports continuous, provenance-backed proof
 - EvaluationResult.decision_basis records deterministic vs assisted vs manual
 - ExceptionRecord + ActionRecord enable explicit human oversight and corrective action
+Phase 4.3: ActionRecord status now includes verification outcomes.
 """
 from __future__ import annotations
 
@@ -62,13 +63,17 @@ class ExceptionRecord(BaseModel):
 
 
 class ActionRecord(BaseModel):
-    """Outbound action from the governance plane (explicit, not agent-opaque)."""
+    """Outbound action from the governance plane (explicit, not agent-opaque).
+
+    Status progression: pending → emitted → (verified | still_failing | expired)
+    """
     action_id: str = Field(default_factory=_ulid)
     control_id: str
     action_type: Literal["webhook", "ticket", "agentbridge_event", "none"] = "none"
     payload: dict[str, Any] = Field(default_factory=dict)
-    status: Literal["pending", "emitted", "failed", "suppressed"] = "pending"
+    status: Literal["pending", "emitted", "failed", "suppressed", "verified", "still_failing"] = "pending"
     emitted_at: datetime | None = None
+    verified_at: datetime | None = None
     reason: str | None = None
 
 
