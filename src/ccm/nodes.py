@@ -6,6 +6,7 @@ No hardcoded metrics. Fully offline-replayable.
 Ticket 3: exception persistence + dual-control enforcement + decision log.
 Hash-chain: trusted evidence lineage for offline replay and auditor confidence.
 Materiality driven from control pack. Outbound actions policy-gated and explicit (stubs).
+Journey status surfaced for operator flow.
 """
 from __future__ import annotations
 
@@ -303,6 +304,22 @@ def govern_check(state: CCMState) -> CCMState:
     return state
 
 
+def _journey_status(metrics: dict) -> str:
+    fails = metrics.get("evaluations_fail", 0)
+    emitted = metrics.get("emitted_actions", 0)
+    pending = metrics.get("pending_actions", 0)
+    suppressed = metrics.get("suppressed_by_exception", 0)
+    if fails == 0:
+        return "all_controls_passing"
+    if emitted > 0 and pending == 0:
+        return "actions_emitted_awaiting_verification"
+    if pending > 0:
+        return "pending_actions_need_emission"
+    if suppressed == fails:
+        return "failures_suppressed_by_exception"
+    return "failures_open"
+
+
 def report(state: CCMState, output_dir: Path | None = None) -> CCMState:
     """Compute real metrics and write audit pack."""
     total = len(state.evaluations)
@@ -331,6 +348,7 @@ def report(state: CCMState, output_dir: Path | None = None) -> CCMState:
         "emitted_actions": emitted,
         "decision_basis": "deterministic",
     })
+    state.metrics["journey_status"] = _journey_status(state.metrics)
 
     out = output_dir or AUDIT_PACK_DIR
     out.mkdir(parents=True, exist_ok=True)
@@ -344,6 +362,7 @@ def report(state: CCMState, output_dir: Path | None = None) -> CCMState:
         f"Run ID: `{state.run_id}`",
         f"Decision basis: deterministic",
         f"Evidence chain root: `{chain_root}`",
+        f"Journey status: **{state.metrics['journey_status']}**",
         "",
         "## Metrics",
         f"- Coverage: **{coverage}%**",
