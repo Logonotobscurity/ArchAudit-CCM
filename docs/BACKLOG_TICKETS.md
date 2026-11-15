@@ -7,7 +7,7 @@ These items close the gap between market core promise and current public state, 
 - [x] **Ticket 1 — Public vertical slice**: load control pack → run deterministic rules against sample evidence → emit real audit pack (Coverage % + Time-to-Evidence). No hardcoded metrics.
 - [x] **Ticket 2 — Governance state contracts**: `ExceptionRecord` + `ActionRecord` added to CCMState.
 - [x] **Ticket 3 — `govern_check` node (full)**: exceptions persisted to `samples/exceptions.json`, dual control + TTL enforced, decision log written into the audit pack.
-- [ ] **Evidence hash chain / integrity verification on replay** (trusted evidence lineage — high priority after Nov 2026 market + Africa research; supports offline replay, data localisation, and auditor confidence under NDPA/GAID and Kenya constraints).
+- [x] **Evidence hash chain / integrity verification on replay** (trusted evidence lineage — root written into metrics and audit pack; supports offline replay, data localisation, and auditor confidence under NDPA/GAID and Kenya constraints).
 - [ ] Materiality thresholds driven from the control pack (not hardcoded).
 - [ ] Outbound action hooks (webhook, simple ticket stub, AgentBridge event emission). Keep actions policy-gated and explicit.
 - [ ] Thin FastAPI `/runs` + basic auth stub so the product can be called by other systems.
@@ -39,3 +39,4 @@ These items close the gap between market core promise and current public state, 
 - [x] ADR + market realignment + ISO 42001 / African governance note (v3.1)
 - [x] Exception persistence + dual-control governance (Ticket 3)
 - [x] 2026 market + Africa alignment note + Nigeria regional overlay
+- [x] Evidence hash-chain for trusted lineage on replay
