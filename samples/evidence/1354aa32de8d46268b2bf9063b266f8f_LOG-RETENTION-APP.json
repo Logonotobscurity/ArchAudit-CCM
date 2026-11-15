@@ -1,10 +1,11 @@
 {
   "ok": true,
   "data": {
+    "app_log_retention_days": 45,
     "retention_days": 45,
     "ok": true
   },
   "error_code": null,
   "latency_ms": 0,
-  "content_hash": "example"
+  "content_hash": "log-app-hash-001"
 }

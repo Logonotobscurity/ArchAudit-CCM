@@ -2,9 +2,9 @@
   "ok": true,
   "data": {
     "role": "admin",
-    "found": true,
-    "mfa_required": true,
+    "admin_mfa": true,
     "mfa_enforced": true,
+    "found": true,
     "ok": true
   },
   "error_code": null,
