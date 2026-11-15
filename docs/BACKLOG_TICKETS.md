@@ -31,7 +31,7 @@ These items close the gap between market core promise and current public state, 
 - [ ] Production auth & secrets (replace basic-auth stub).
 - [ ] Audit-pack enrichment & extra export options.
 - [ ] Operator journey surface improvements.
-- [ ] End-to-end offline replay test suite in CI.
+- [x] **End-to-end offline replay test suite in CI**: `tests/test_offline_replay.py` plus an explicit CI step assert that two consecutive runs produce an identical evidence chain root and that previous-run comparison is active.
 - [ ] Documentation & operator runbook.
 
 ## Design Constraints (do not violate)
@@ -62,3 +62,4 @@ These items close the gap between market core promise and current public state, 
 - [x] Phase 4.2: previous-state store + true drift comparison
 - [x] Phase 4.3: remediation verification loop (verified / still_failing)
 - [x] Phase 4.4: live adapter stubs (GitHub, identity, cloud posture) with offline fallbacks
+- [x] Phase 4.9: end-to-end offline replay test suite in CI
