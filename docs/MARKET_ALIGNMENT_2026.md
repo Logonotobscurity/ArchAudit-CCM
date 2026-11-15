@@ -8,6 +8,22 @@ Last researched: 15 November 2026.
 - Agentic continuous control monitoring is moving into production. ServiceNow announced agentic CCM for IRM (expected GA Q1 2027) that turns failed controls into tickets and automated fixes. Buyers prefer agents first on measurable internal work.
 - Traditional GRC platforms are under strain: high manual evidence burden, delayed control testing, and low rates of real-time monitoring. Deterministic evaluation + explicit, auditable actions remain a differentiator against opaque agent loops.
 
+## Outbound actions & integrations landscape (Nov 2026)
+
+| Layer | Typical Players | Core Promise | Strength | Weakness |
+| --- | --- | --- | --- | --- |
+| Enterprise GRC platforms with agentic CCM | ServiceNow IRM (agentic CCM announced Nov 2026, GA Q1 2027), Cyber Sierra, MetricStream, OneTrust, LogicGate, Hyperproof | Always-on control testing + AI agents that interpret, ticket, and sometimes remediate | Breadth of integrations (100+), closed-loop remediation, multi-framework mapping | Heavy, expensive, vendor-locked, often still audit-focused rather than evidence-native; remediation is policy-gated but can become opaque |
+| Compliance automation / evidence platforms | Vanta, Drata, Secureframe, Sprinto, Scytale, Anecdotes, Compyl | Automated evidence collection + continuous tests for SOC 2 / ISO / etc.; some ticket creation and webhook steps | Fast time-to-value for first audit, good integrations (Jira, Slack, ServiceNow) | Mostly “evidence exists” rather than “control is operating”; limited governance depth; actions often workflow-driven rather than explicitly auditable |
+| Specialised / deterministic / agent-control layers | GATE (deterministic-agents), Kayllo Control, Vaikora-style policy gates, Panaseer (trusted evidence), emerging agent-control monitors | Deterministic enforcement, typed evidence, pre-action gating, replayable proof, require-approval | High trust, low hallucination risk, good for AI-agent environments, hash-chained audit | Narrower scope, fewer integrations, still early |
+
+**Observed patterns for outbound actions:**
+- ServiceNow IRM: failed control → flag → open ticket → optional auto-remediate within defined policies → verify. Closed loop emphasized by IDC.
+- Anecdotes Agentic CCM: gap detection → tailored notification (control owner / risk / tech) → Jira/PagerDuty/Okta remediation → re-verify.
+- Drata: write-access ticket creation for controls/monitoring/risks; custom workflows with “Send Webhook” steps to Zapier/Torq/ServiceNow.
+- Deterministic gates (Vaikora, GATE, Kayllo): inline policy decision (allow/block/modify/require-approval) **before** action executes; deterministic, replayable, hash-chained log. No post-facto agent loop.
+
+ArchAudit follows the deterministic layer pattern: ActionRecord is explicit, policy-gated, status tracked (pending → emitted/suppressed), stubs written for offline replay. No opaque agent remediation.
+
 ## African operating context (NG + KE priority)
 
 - **Nigeria (NDPA 2023 + GAID 2025, effective Sep 2025)**: Continuous monitoring and evaluation required for AI/emerging technologies once deployed. DPIAs mandatory for automated decisions, new technologies, and listed sectors (including digital financial services). Safeguards must be documented for the annual compliance audit return. Human intervention rights apply to automated decisions with legal or similarly significant effects.
@@ -35,5 +51,6 @@ Differentiating design choices that match African realities:
 - YAML regional packs as pure data (NG, KE) rather than hard-coded logic.
 - Explicit dual-control + TTL exceptions and outbound actions (human oversight remains visible and auditable).
 - Deterministic-first evaluation with any assisted path policy-gated and recorded.
+- Policy-gated, explicit outbound stubs (webhook/ticket/AgentBridge) written for offline replay — no opaque agent loop.
 
 These choices keep the system lightweight, auditable, and operable under the infrastructure and regulatory constraints that exist in Nigeria and Kenya today.
