@@ -7,6 +7,7 @@ Ticket 3: exception persistence + dual-control enforcement + decision log.
 Hash-chain: trusted evidence lineage for offline replay and auditor confidence.
 Materiality driven from control pack. Outbound actions policy-gated and explicit (stubs).
 Journey status surfaced for operator flow.
+OSCAL AR export + lightweight metrics HTML written alongside the audit pack.
 """
 from __future__ import annotations
 
@@ -27,6 +28,8 @@ from src.ccm.state import (
     ExceptionRecord,
     utcnow,
 )
+from src.ccm.oscal import write_oscal
+from src.ccm.metrics_surface import write_html
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTROLS_PATH = ROOT / "policies" / "controls.yaml"
@@ -321,7 +324,7 @@ def _journey_status(metrics: dict) -> str:
 
 
 def report(state: CCMState, output_dir: Path | None = None) -> CCMState:
-    """Compute real metrics and write audit pack."""
+    """Compute real metrics and write audit pack + OSCAL + metrics HTML."""
     total = len(state.evaluations)
     passed = sum(1 for e in state.evaluations if e.status == "pass")
     coverage = round((passed / total * 100) if total else 0.0, 1)
@@ -395,6 +398,11 @@ def report(state: CCMState, output_dir: Path | None = None) -> CCMState:
 
     with (out / "summary.md").open("w") as f:
         f.write("\n".join(lines) + "\n")
+
+    # Phased OSCAL AR export
+    write_oscal(state, out)
+    # Lightweight metrics HTML surface
+    write_html(out / "metrics.html")
 
     return state
 
