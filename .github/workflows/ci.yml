@@ -22,5 +22,27 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Run test suite
         run: make test
+      - name: Validate control packs and sample evidence against schemas
+        run: |
+          python -c "
+          import json, yaml
+          from pathlib import Path
+          from jsonschema import validate
+          root = Path('.')
+          pack_schema = json.loads((root / 'policies/control_pack.schema.json').read_text())
+          ev_schema = json.loads((root / 'docs/evidence.schema.json').read_text())
+          for p in (root / 'policies').rglob('*.yaml'):
+              data = yaml.safe_load(p.read_text())
+              if 'controls' in data:
+                  validate(instance=data, schema=pack_schema)
+                  print(f'OK pack: {p}')
+          for p in (root / 'samples/evidence').glob('*.json'):
+              data = json.loads(p.read_text())
+              # sample files may be raw payload or full EvidenceRecord
+              if 'evidence_id' in data:
+                  validate(instance=data, schema=ev_schema)
+                  print(f'OK evidence: {p}')
+          print('Schema validation passed')
+          "
       - name: Generate sample audit pack
         run: make run-sample
