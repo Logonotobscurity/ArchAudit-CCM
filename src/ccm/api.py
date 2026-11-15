@@ -1,7 +1,7 @@
 """Thin FastAPI surface so other systems can trigger CCM runs.
 
 Basic auth stub (replace with real auth in production).
-Offline-replayable: returns the same audit pack metrics.
+Offline-replayable: returns the same audit pack metrics plus journey status.
 """
 from __future__ import annotations
 
@@ -28,13 +28,31 @@ def _check_auth(credentials: HTTPBasicCredentials = Depends(security)) -> str:
     return credentials.username
 
 
+def _journey_status(metrics: dict) -> str:
+    fails = metrics.get("evaluations_fail", 0)
+    emitted = metrics.get("emitted_actions", 0)
+    pending = metrics.get("pending_actions", 0)
+    suppressed = metrics.get("suppressed_by_exception", 0)
+    if fails == 0:
+        return "all_controls_passing"
+    if emitted > 0 and pending == 0:
+        return "actions_emitted_awaiting_verification"
+    if pending > 0:
+        return "pending_actions_need_emission"
+    if suppressed == fails:
+        return "failures_suppressed_by_exception"
+    return "failures_open"
+
+
 @app.post("/runs")
 def run_ccm(user: str = Depends(_check_auth)) -> dict:
-    """Trigger a deterministic CCM run and return metrics + action summary."""
+    """Trigger a deterministic CCM run and return metrics + journey status."""
     state = run_pipeline()
+    metrics = state.metrics
     return {
         "run_id": state.run_id,
-        "metrics": state.metrics,
+        "journey_status": _journey_status(metrics),
+        "metrics": metrics,
         "actions": [
             {
                 "control_id": a.control_id,
