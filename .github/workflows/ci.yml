@@ -46,3 +46,15 @@ jobs:
           "
       - name: Generate sample audit pack
         run: make run-sample
+      - name: Assert offline replay stability
+        run: |
+          python -c "
+          from src.ccm.nodes import run_pipeline
+          s1 = run_pipeline()
+          c1 = s1.metrics['evidence_chain_root']
+          s2 = run_pipeline()
+          c2 = s2.metrics['evidence_chain_root']
+          assert c1 == c2, f'Chain root changed: {c1} vs {c2}'
+          assert s2.metrics.get('previous_run_compared') is True
+          print('Offline replay stable — chain root identical')
+          "
