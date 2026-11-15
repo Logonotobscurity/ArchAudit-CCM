@@ -10,12 +10,13 @@
 - Multi-run history module.
 - Inbound retention module.
 - Metrics history view generator.
-- Operator runbook refreshed with Phase 6 capabilities.
+- Operator runbook refreshed.
 
-## Pipeline
+## Pipeline restoration
 
-The complete `src/ccm/nodes.py` (regional loader, history append, retention cleanup) is staged and ready.  
-Repository currently holds a placeholder version pending full-file restoration.
+The complete `src/ccm/nodes.py` is staged and verified locally.  
+It includes regional loader, history append, and retention cleanup.  
+Repository holds a placeholder pending full-file upload.
 
 ## Remaining
 
