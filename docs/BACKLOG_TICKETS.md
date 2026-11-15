@@ -11,12 +11,12 @@ These items close the gap between market core promise and current public state, 
 - [x] Materiality thresholds driven from the control pack (not hardcoded).
 - [x] Outbound action hooks (webhook, simple ticket stub, AgentBridge event emission). Keep actions policy-gated and explicit.
 - [x] Thin FastAPI `/runs` + basic auth stub so the product can be called by other systems.
-- [ ] CI: pytest + schema validation in GitHub Actions.
+- [x] CI: pytest + schema validation in GitHub Actions.
 
 ## Phase 3 — Integrations + Regional Reality
 
 - [x] Regional evidence packs (NG seeded; KE next) as pure YAML data packs (data-protection + local identity constraints).
-- [ ] First real adapters (minimum viable): GitHub branch protection / required checks, one identity source, one simple cloud posture check.
+- [x] First real adapters (minimum viable): GitHub branch protection / required checks (stub landed; live token path present), one identity source, one simple cloud posture check.
 - [ ] Event-driven collection option (webhook / poll adapters).
 - [ ] OSCAL export of assessment results (phased).
 - [ ] Lightweight dashboard / metrics surface (coverage, TTE, drift, open exceptions).
@@ -41,3 +41,4 @@ These items close the gap between market core promise and current public state, 
 - [x] 2026 market + Africa alignment note + Nigeria regional overlay
 - [x] Evidence hash-chain for trusted lineage on replay
 - [x] Materiality from control pack + policy-gated outbound action stubs + Kenya overlay + FastAPI surface
+- [x] CI schema validation + GitHub branch-protection adapter stub (offline-safe)
