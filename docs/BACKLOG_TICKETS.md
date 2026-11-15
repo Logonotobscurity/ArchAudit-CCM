@@ -34,6 +34,19 @@ These items close the gap between market core promise and current public state, 
 - [x] **End-to-end offline replay test suite in CI**: `tests/test_offline_replay.py` plus an explicit CI step assert that two consecutive runs produce an identical evidence chain root and that previous-run comparison is active.
 - [x] **Documentation & operator runbook**: `docs/OPERATOR_RUNBOOK.md` covers triggering runs, webhook ingest, journey status, adding regional packs/adapters, offline replay verification, and secrets.
 
+## Phase 5 — Depth, Trust & Operability
+
+- [x] **Live adapter implementations**: GitHub branch-protection and identity MFA poll now make real HTTP calls (timeout + graceful fallback to stub) when credentials are present.
+- [x] **Multi-run history retention**: `src/ccm/history.py` appends compact snapshots to `samples/run_history.jsonl` (rolling last N). Tested.
+- [x] **Signed audit-pack option**: `src/ccm/signing.py` produces a detached signature (or deterministic placeholder) over the evidence chain root.
+- [x] **Regional pack loader**: `src/ccm/regional.py` loads base controls plus overlays selected by `ARCHAUDIT_REGION` (comma-separated).
+- [ ] Action verification TTL & scheduling.
+- [ ] Inbound evidence cleanup & retention.
+- [ ] Metrics surface enhancements.
+- [ ] Schema & contract hardening.
+- [x] **Operator CLI**: `python -m src.ccm.cli` with `run`, `status`, `verify-replay` commands.
+- [ ] Documentation refresh.
+
 ## Design Constraints (do not violate)
 
 - Evidence plane stays pure (typed Evidence only).
@@ -58,11 +71,5 @@ These items close the gap between market core promise and current public state, 
 - [x] Product journey documented (aligned to ServiceNow / Drata / Anecdotes / JupiterOne closed-loop patterns) + `journey_status` in metrics and API
 - [x] Phased OSCAL Assessment Results export + lightweight static metrics HTML surface
 - [x] Event-driven collection: webhook evidence ingest + poll adapter stub
-- [x] Phase 4.1: inbound evidence merge + dedupe by content hash
-- [x] Phase 4.2: previous-state store + true drift comparison
-- [x] Phase 4.3: remediation verification loop (verified / still_failing)
-- [x] Phase 4.4: live adapter stubs (GitHub, identity, cloud posture) with offline fallbacks
-- [x] Phase 4.5: additional regional overlays (ZA POPIA, GH DPA)
-- [x] Phase 4.6: production API-key auth
-- [x] Phase 4.9: end-to-end offline replay test suite in CI
-- [x] Phase 4.10: operator runbook
+- [x] Phase 4 complete
+- [x] Phase 5 suggested-order track (live adapters, history, signing, regional loader, CLI)
