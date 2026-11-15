@@ -2,7 +2,7 @@
 
 ## Completed
 
-- Additional live adapters (cloud posture HTTP path).
+- Additional live adapters.
 - ITSM / ticketing adapter.
 - Optional Ed25519 signing path.
 - Scheduled / cron entrypoint.
@@ -15,11 +15,14 @@
 ## Pipeline restoration
 
 The complete `src/ccm/nodes.py` is staged and verified locally.  
-It includes regional loader, history append, and retention cleanup.  
-Repository holds a placeholder pending full-file upload.
+Length: 22 057 characters.  
+Includes regional loader, history append, and retention cleanup.  
+Repository holds a placeholder version.  
+Full-file restoration is required to complete the wiring.
 
 ## Remaining
 
+- Full `nodes.py` restoration.
 - Action payload enrichment.
 - CI live-adapter smoke tests.
 
