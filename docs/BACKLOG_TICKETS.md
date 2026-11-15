@@ -24,7 +24,7 @@ These items close the gap between market core promise and current public state, 
 ## Phase 4 — Closed-Loop Hardening, Live Adapters & Production Readiness
 
 - [x] **Inbound evidence processing**: pipeline loads `samples/inbound/` (webhook + poll) and merges with sample evidence, deduplicating by content hash. Inbound takes precedence. Metrics now report `inbound_evidence_count`.
-- [ ] Multi-run history & previous-state store (compare against prior run for true drift).
+- [x] **Multi-run history & previous-state store**: compact `samples/previous_state.json` snapshot of prior evaluations. Drift now compares status changes and populates `previous_evaluation_id`. Metrics report `previous_run_compared`.
 - [ ] Remediation verification loop (re-collect after TTL and mark ActionRecord verified / still_failing).
 - [ ] Live adapters (first production set): GitHub, identity MFA, one cloud posture check — with offline fallbacks.
 - [ ] Additional regional overlays (e.g. South Africa POPIA, Ghana or Rwanda).
@@ -59,3 +59,4 @@ These items close the gap between market core promise and current public state, 
 - [x] Phased OSCAL Assessment Results export + lightweight static metrics HTML surface
 - [x] Event-driven collection: webhook evidence ingest + poll adapter stub
 - [x] Phase 4.1: inbound evidence merge + dedupe by content hash
+- [x] Phase 4.2: previous-state store + true drift comparison
