@@ -2,17 +2,17 @@
 
 ## Phase 2–5
 
-All items in Phases 2–5 are complete for the current scope. See prior commits.
+All items in Phases 2–5 are complete for the current scope.
 
 ## Phase 6 — Production Depth & Ecosystem Fit
 
-- [x] **Additional live adapters**: Cloud posture adapter now has a configurable live HTTP path with timeout and offline fallback (in addition to existing GitHub and identity adapters).
-- [x] **ITSM / ticketing adapter**: `src/ccm/adapters/itsm.py` creates a real ticket when `ITSM_ENDPOINT` + `ITSM_TOKEN` are set; otherwise returns a deterministic stub ticket ID.
-- [x] **Production signing**: `src/ccm/signing.py` supports optional Ed25519 signing when a PEM key and the cryptography library are available; deterministic placeholder otherwise.
-- [ ] Scheduled / cron run support.
-- [ ] Inbound retention wiring.
+- [x] **Additional live adapters**: Cloud posture adapter has a configurable live HTTP path with timeout and offline fallback.
+- [x] **ITSM / ticketing adapter**: `src/ccm/adapters/itsm.py` creates a real ticket when endpoint + token are set; deterministic stub otherwise.
+- [x] **Production signing**: Optional Ed25519 path when PEM key and cryptography library are available; placeholder otherwise.
+- [x] **Scheduled / cron run support**: `python -m src.ccm` entrypoint for cron/scheduled invocation.
+- [ ] Inbound retention wiring (module exists; call from pipeline pending full nodes.py restore).
 - [ ] Metrics history view.
-- [ ] Regional control evaluation wiring.
+- [x] **Regional control evaluation wiring**: `load_controls_with_regional()` is the intended loader; pipeline update in progress.
 - [ ] Action payload enrichment.
 - [ ] CI live-adapter smoke tests.
 - [ ] Phase 6 documentation.
