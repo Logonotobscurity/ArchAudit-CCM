@@ -1,39 +1,54 @@
 """Thin FastAPI surface so other systems can trigger CCM runs or push evidence.
 
-Basic auth stub (replace with real auth in production).
+API-key auth via CCM_API_KEY environment variable (production).
+Falls back to basic-auth stub when the env var is unset (local/dev).
 Offline-replayable: returns the same audit pack metrics plus journey status.
 Webhook ingest supports event-driven collection.
 """
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
 
 from src.ccm.nodes import run_pipeline
-from src.ccm.state import EvidenceRecord
 
 app = FastAPI(title="ArchAudit CCM", version="0.1.0")
-security = HTTPBasic()
+security = HTTPBasic(auto_error=False)
 
-# Stub credentials — replace with proper secret management
+# Production: set CCM_API_KEY. Local: falls back to basic stub.
+_API_KEY = os.environ.get("CCM_API_KEY")
 _VALID_USER = "ccm"
 _VALID_PASS = "changeme"
 INBOUND_DIR = Path(__file__).resolve().parents[2] / "samples" / "inbound"
 
 
-def _check_auth(credentials: HTTPBasicCredentials = Depends(security)) -> str:
-    if credentials.username != _VALID_USER or credentials.password != _VALID_PASS:
+def _check_auth(
+    credentials: HTTPBasicCredentials | None = Depends(security),
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+) -> str:
+    # Prefer API key when configured
+    if _API_KEY:
+        if x_api_key == _API_KEY:
+            return "api-key"
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
-            headers={"WWW-Authenticate": "Basic"},
+            detail="Invalid or missing API key",
         )
-    return credentials.username
+    # Fallback basic auth stub for local use
+    if credentials and credentials.username == _VALID_USER and credentials.password == _VALID_PASS:
+        return credentials.username
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid credentials",
+        headers={"WWW-Authenticate": "Basic"},
+    )
 
 
 def _journey_status(metrics: dict) -> str:
@@ -92,8 +107,6 @@ def ingest_evidence(
     Stores the payload under samples/inbound/ so it survives and can be replayed.
     """
     INBOUND_DIR.mkdir(parents=True, exist_ok=True)
-    # Simple content hash if not supplied
-    import hashlib
     raw = json.dumps(body.payload, sort_keys=True, default=str).encode()
     ch = body.content_hash or hashlib.sha256(raw).hexdigest()
     record = {
@@ -124,4 +137,4 @@ def ingest_evidence(
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok"}
+    return {"status": "ok", "auth": "api-key" if _API_KEY else "basic-stub"}
