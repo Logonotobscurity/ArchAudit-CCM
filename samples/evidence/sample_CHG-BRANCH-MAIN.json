@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "data": {
+    "main_protected": true,
+    "ok": true
+  },
+  "error_code": null,
+  "latency_ms": 0,
+  "content_hash": "chg-main-hash-001"
+}

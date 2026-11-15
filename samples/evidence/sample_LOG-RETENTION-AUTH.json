@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "data": {
+    "auth_log_retention_days": 120,
+    "retention_days": 120,
+    "ok": true
+  },
+  "error_code": null,
+  "latency_ms": 0,
+  "content_hash": "log-auth-hash-001"
+}
