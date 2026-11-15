@@ -26,7 +26,7 @@ These items close the gap between market core promise and current public state, 
 - [x] **Inbound evidence processing**: pipeline loads `samples/inbound/` (webhook + poll) and merges with sample evidence, deduplicating by content hash. Inbound takes precedence. Metrics now report `inbound_evidence_count`.
 - [x] **Multi-run history & previous-state store**: compact `samples/previous_state.json` snapshot of prior evaluations. Drift now compares status changes and populates `previous_evaluation_id`. Metrics report `previous_run_compared`.
 - [x] **Remediation verification loop**: after emission, the next run re-evaluates the control and marks the ActionRecord `verified` (now passes) or `still_failing`. Metrics report `verified_actions` and `still_failing_actions`. Explicit and auditable.
-- [ ] Live adapters (first production set): GitHub, identity MFA, one cloud posture check — with offline fallbacks.
+- [x] **Live adapters (first production set)**: GitHub branch protection, identity MFA poll, and cloud posture (S3 encryption) adapters. Each has a live-path placeholder gated by credentials and a deterministic offline stub. Tests cover the offline path.
 - [ ] Additional regional overlays (e.g. South Africa POPIA, Ghana or Rwanda).
 - [ ] Production auth & secrets (replace basic-auth stub).
 - [ ] Audit-pack enrichment & extra export options.
@@ -61,3 +61,4 @@ These items close the gap between market core promise and current public state, 
 - [x] Phase 4.1: inbound evidence merge + dedupe by content hash
 - [x] Phase 4.2: previous-state store + true drift comparison
 - [x] Phase 4.3: remediation verification loop (verified / still_failing)
+- [x] Phase 4.4: live adapter stubs (GitHub, identity, cloud posture) with offline fallbacks
