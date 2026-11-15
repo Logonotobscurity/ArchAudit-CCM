@@ -2,6 +2,8 @@
 
 Public vertical slice (Ticket 1): deterministic evaluation against sample evidence.
 No hardcoded metrics. Fully offline-replayable.
+
+Ticket 3: exception persistence + dual-control enforcement + decision log.
 """
 from __future__ import annotations
 
@@ -27,6 +29,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CONTROLS_PATH = ROOT / "policies" / "controls.yaml"
 EVIDENCE_DIR = ROOT / "samples" / "evidence"
 AUDIT_PACK_DIR = ROOT / "samples" / "audit_pack"
+EXCEPTIONS_PATH = ROOT / "samples" / "exceptions.json"
 
 
 def _load_control_pack() -> list[dict[str, Any]]:
@@ -64,7 +67,6 @@ def _eval_rule(rule: str, data: dict[str, Any]) -> tuple[str, str]:
         expected = True if right.lower() == "true" else False if right.lower() == "false" else right
         actual = data.get(left)
         if actual is None:
-            # try nested common keys from sample evidence
             actual = data.get("mfa_enforced") if "mfa" in left else data.get(left)
         ok = actual == expected
         return ("pass" if ok else "fail", f"{left}={actual!r} expected {expected!r}")
@@ -82,6 +84,26 @@ def _eval_rule(rule: str, data: dict[str, Any]) -> tuple[str, str]:
         ok = float(actual) >= threshold
         return ("pass" if ok else "fail", f"{left}={actual} >= {threshold}")
     return ("unknown", f"unsupported rule form: {rule}")
+
+
+def _load_exceptions() -> list[ExceptionRecord]:
+    """Load persisted exceptions (Ticket 3)."""
+    if not EXCEPTIONS_PATH.exists():
+        return []
+    try:
+        with EXCEPTIONS_PATH.open() as f:
+            raw = json.load(f)
+        return [ExceptionRecord.model_validate(item) for item in raw]
+    except Exception:
+        return []
+
+
+def _save_exceptions(exceptions: list[ExceptionRecord]) -> None:
+    """Persist exceptions so they survive across runs."""
+    EXCEPTIONS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    payload = [e.model_dump(mode="json") for e in exceptions]
+    with EXCEPTIONS_PATH.open("w") as f:
+        json.dump(payload, f, indent=2, default=str)
 
 
 def collect(state: CCMState, controls: list[dict[str, Any]]) -> CCMState:
@@ -149,18 +171,40 @@ def drift(state: CCMState) -> CCMState:
 
 
 def govern_check(state: CCMState) -> CCMState:
-    """Minimal governance plane (Ticket 3 skeleton).
+    """Governance plane (Ticket 3).
 
-    Failed controls without a valid exception produce a pending ActionRecord.
-    Dual-control exceptions are recognised but not yet persisted across runs.
+    - Loads persisted exceptions
+    - Enforces dual-control + TTL
+    - Emits suppressed or pending ActionRecord
+    - Writes a decision log entry into state.metrics for the audit pack
     """
-    approved_exceptions = {
-        e.control_id
-        for e in state.exceptions
-        if e.status == "approved"
-        and (not e.dual_control_required or len(e.approved_by) >= 2)
-        and (e.expires_at is None or e.expires_at > utcnow())
-    }
+    # Reload in case external changes occurred between runs
+    persisted = _load_exceptions()
+    # Merge: prefer already-in-state (in-memory) over file for this run
+    by_id = {e.exception_id: e for e in persisted}
+    for e in state.exceptions:
+        by_id[e.exception_id] = e
+    state.exceptions = list(by_id.values())
+
+    now = utcnow()
+    approved_exceptions = set()
+    decision_log = []
+
+    for e in state.exceptions:
+        dual_ok = (not e.dual_control_required) or (len(e.approved_by) >= 2)
+        not_expired = e.expires_at is None or e.expires_at > now
+        is_valid = e.status == "approved" and dual_ok and not_expired
+        if is_valid:
+            approved_exceptions.add(e.control_id)
+        decision_log.append({
+            "exception_id": e.exception_id,
+            "control_id": e.control_id,
+            "status": e.status,
+            "dual_control_ok": dual_ok,
+            "not_expired": not_expired,
+            "valid": is_valid,
+        })
+
     for ev in state.evaluations:
         if ev.status != "fail":
             continue
@@ -170,9 +214,14 @@ def govern_check(state: CCMState) -> CCMState:
                     control_id=ev.control_id,
                     action_type="none",
                     status="suppressed",
-                    reason="valid exception",
+                    reason="valid dual-control exception",
                 )
             )
+            decision_log.append({
+                "control_id": ev.control_id,
+                "decision": "suppress",
+                "reason": "valid exception",
+            })
             continue
         state.actions.append(
             ActionRecord(
@@ -183,6 +232,13 @@ def govern_check(state: CCMState) -> CCMState:
                 reason="failed control, no valid exception",
             )
         )
+        decision_log.append({
+            "control_id": ev.control_id,
+            "decision": "pending_action",
+            "reason": "no valid exception",
+        })
+
+    state.metrics["decision_log"] = decision_log
     return state
 
 
@@ -195,7 +251,7 @@ def report(state: CCMState, output_dir: Path | None = None) -> CCMState:
     pending_actions = sum(1 for a in state.actions if a.status == "pending")
     suppressed = sum(1 for a in state.actions if a.status == "suppressed")
 
-    state.metrics = {
+    state.metrics.update({
         "control_coverage_pct": coverage,
         "time_to_evidence_minutes": round(state.metrics.get("_elapsed_s", 0) / 60, 2),
         "drift_count": sum(1 for d in state.drifts if d.materiality != "none"),
@@ -207,13 +263,13 @@ def report(state: CCMState, output_dir: Path | None = None) -> CCMState:
         "pending_actions": pending_actions,
         "suppressed_by_exception": suppressed,
         "decision_basis": "deterministic",
-    }
+    })
 
     out = output_dir or AUDIT_PACK_DIR
     out.mkdir(parents=True, exist_ok=True)
 
     with (out / "metrics.json").open("w") as f:
-        json.dump(state.metrics, f, indent=2)
+        json.dump(state.metrics, f, indent=2, default=str)
 
     lines = [
         "# ArchAudit CCM — Sample Audit Pack",
@@ -228,6 +284,7 @@ def report(state: CCMState, output_dir: Path | None = None) -> CCMState:
         f"- Unknown (no evidence): {state.metrics['evaluations_unknown']}",
         f"- Pending actions: {pending_actions}",
         f"- Suppressed by exception: {suppressed}",
+        f"- Open exceptions: {open_exceptions}",
         "",
         "## Evaluations",
     ]
@@ -240,6 +297,14 @@ def report(state: CCMState, output_dir: Path | None = None) -> CCMState:
     for a in state.actions:
         lines.append(f"- `{a.control_id}` → {a.status} ({a.action_type}) — {a.reason}")
 
+    # Decision log (Ticket 3)
+    log = state.metrics.get("decision_log", [])
+    if log:
+        lines.append("")
+        lines.append("## Decision Log")
+        for entry in log:
+            lines.append(f"- {entry}")
+
     with (out / "summary.md").open("w") as f:
         f.write("\n".join(lines) + "\n")
 
@@ -251,15 +316,20 @@ def run_pipeline(
     output_dir: str | None = None,
     budget_ms: int = 30000,
 ) -> CCMState:
-    """Public entrypoint — deterministic vertical slice."""
+    """Public entrypoint — deterministic vertical slice + Ticket 3 governance."""
     t0 = time.perf_counter()
     state = CCMState()
+    # Load persisted exceptions before evaluation
+    state.exceptions = _load_exceptions()
     controls = _load_control_pack()
 
     state = collect(state, controls)
     state = evaluate(state, controls)
     state = drift(state)
     state = govern_check(state)
+
+    # Persist any changes to exceptions
+    _save_exceptions(state.exceptions)
 
     elapsed = time.perf_counter() - t0
     state.metrics["_elapsed_s"] = elapsed
