@@ -8,6 +8,7 @@ Hash-chain: trusted evidence lineage for offline replay and auditor confidence.
 Materiality driven from control pack. Outbound actions policy-gated and explicit (stubs).
 Journey status surfaced for operator flow.
 OSCAL AR export + lightweight metrics HTML written alongside the audit pack.
+Phase 4.1: inbound evidence (webhook/poll) is loaded and merged with sample evidence, deduplicated by content hash.
 """
 from __future__ import annotations
 
@@ -34,6 +35,7 @@ from src.ccm.metrics_surface import write_html
 ROOT = Path(__file__).resolve().parents[2]
 CONTROLS_PATH = ROOT / "policies" / "controls.yaml"
 EVIDENCE_DIR = ROOT / "samples" / "evidence"
+INBOUND_DIR = ROOT / "samples" / "inbound"
 AUDIT_PACK_DIR = ROOT / "samples" / "audit_pack"
 EXCEPTIONS_PATH = ROOT / "samples" / "exceptions.json"
 OUTBOUND_DIR = ROOT / "samples" / "outbound"
@@ -49,14 +51,19 @@ def _control_materiality_map(controls: list[dict[str, Any]]) -> dict[str, str]:
     return {c["id"]: c.get("materiality", "none") for c in controls}
 
 
-def _load_evidence_for_control(control_id: str) -> dict[str, Any] | None:
-    """Load the first matching evidence file for a control_id."""
-    if not EVIDENCE_DIR.exists():
-        return None
-    for path in EVIDENCE_DIR.glob(f"*_{control_id}.json"):
-        with path.open() as f:
-            return json.load(f)
-    return None
+def _load_json_evidence_files(directory: Path) -> list[dict[str, Any]]:
+    """Load all JSON evidence files from a directory."""
+    if not directory.exists():
+        return []
+    records = []
+    for path in directory.glob("*.json"):
+        try:
+            with path.open() as f:
+                data = json.load(f)
+            records.append(data)
+        except Exception:
+            continue
+    return records
 
 
 def _content_hash(payload: dict[str, Any]) -> str:
@@ -133,22 +140,82 @@ def _save_exceptions(exceptions: list[ExceptionRecord]) -> None:
 
 
 def collect(state: CCMState, controls: list[dict[str, Any]]) -> CCMState:
-    """Load typed Evidence from sample files."""
-    for ctrl in controls:
-        cid = ctrl["id"]
-        raw = _load_evidence_for_control(cid)
-        if raw is None:
+    """Load typed Evidence from sample files and inbound (webhook/poll) files.
+
+    Deduplicates by content_hash so the same evidence is not evaluated twice.
+    Inbound evidence takes precedence when hashes match (fresher source).
+    """
+    control_ids = {c["id"] for c in controls}
+    seen_hashes: set[str] = set()
+
+    # First load sample evidence
+    sample_records = _load_json_evidence_files(EVIDENCE_DIR)
+    for raw in sample_records:
+        cid = raw.get("control_id") or raw.get("data", {}).get("control_id")
+        if cid not in control_ids:
+            # try filename pattern fallback
             continue
-        payload = raw.get("data", raw)
+        payload = raw.get("data", raw.get("payload", raw))
         ch = raw.get("content_hash") or _content_hash(payload)
+        if ch in seen_hashes:
+            continue
+        seen_hashes.add(ch)
         state.evidence.append(
             EvidenceRecord(
                 control_id=cid,
-                source="sample",
+                source=raw.get("source", "sample"),
                 content_hash=ch,
                 payload=payload,
             )
         )
+
+    # Then load inbound evidence (webhook / poll) — later files override same hash
+    inbound_records = _load_json_evidence_files(INBOUND_DIR)
+    for raw in inbound_records:
+        cid = raw.get("control_id")
+        if not cid or cid not in control_ids:
+            continue
+        payload = raw.get("payload", raw)
+        ch = raw.get("content_hash") or _content_hash(payload)
+        # Remove any previous sample with same hash so inbound wins
+        state.evidence = [e for e in state.evidence if e.content_hash != ch]
+        seen_hashes.add(ch)
+        state.evidence.append(
+            EvidenceRecord(
+                control_id=cid,
+                source=raw.get("source", "inbound"),
+                content_hash=ch,
+                payload=payload,
+            )
+        )
+
+    # Fallback: original filename-based loader for any controls still missing
+    loaded_ids = {e.control_id for e in state.evidence}
+    for ctrl in controls:
+        cid = ctrl["id"]
+        if cid in loaded_ids:
+            continue
+        # original single-file loader
+        for path in EVIDENCE_DIR.glob(f"*_{cid}.json"):
+            try:
+                with path.open() as f:
+                    raw = json.load(f)
+                payload = raw.get("data", raw)
+                ch = raw.get("content_hash") or _content_hash(payload)
+                if ch not in seen_hashes:
+                    state.evidence.append(
+                        EvidenceRecord(
+                            control_id=cid,
+                            source="sample",
+                            content_hash=ch,
+                            payload=payload,
+                        )
+                    )
+                    seen_hashes.add(ch)
+                    break
+            except Exception:
+                continue
+
     return state
 
 
@@ -350,6 +417,7 @@ def report(state: CCMState, output_dir: Path | None = None) -> CCMState:
         "suppressed_by_exception": suppressed,
         "emitted_actions": emitted,
         "decision_basis": "deterministic",
+        "inbound_evidence_count": sum(1 for e in state.evidence if e.source != "sample"),
     })
     state.metrics["journey_status"] = _journey_status(state.metrics)
 
@@ -376,6 +444,7 @@ def report(state: CCMState, output_dir: Path | None = None) -> CCMState:
         f"- Suppressed by exception: {suppressed}",
         f"- Emitted actions: {emitted}",
         f"- Open exceptions: {open_exceptions}",
+        f"- Inbound evidence used: {state.metrics['inbound_evidence_count']}",
         "",
         "## Evaluations",
     ]
