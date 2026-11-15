@@ -21,6 +21,19 @@ These items close the gap between market core promise and current public state, 
 - [x] OSCAL export of assessment results (phased) — minimal AR JSON written alongside audit pack.
 - [x] Lightweight dashboard / metrics surface (coverage, TTE, drift, open exceptions) — static HTML generated from metrics.
 
+## Phase 4 — Closed-Loop Hardening, Live Adapters & Production Readiness
+
+- [x] **Inbound evidence processing**: pipeline loads `samples/inbound/` (webhook + poll) and merges with sample evidence, deduplicating by content hash. Inbound takes precedence. Metrics now report `inbound_evidence_count`.
+- [ ] Multi-run history & previous-state store (compare against prior run for true drift).
+- [ ] Remediation verification loop (re-collect after TTL and mark ActionRecord verified / still_failing).
+- [ ] Live adapters (first production set): GitHub, identity MFA, one cloud posture check — with offline fallbacks.
+- [ ] Additional regional overlays (e.g. South Africa POPIA, Ghana or Rwanda).
+- [ ] Production auth & secrets (replace basic-auth stub).
+- [ ] Audit-pack enrichment & extra export options.
+- [ ] Operator journey surface improvements.
+- [ ] End-to-end offline replay test suite in CI.
+- [ ] Documentation & operator runbook.
+
 ## Design Constraints (do not violate)
 
 - Evidence plane stays pure (typed Evidence only).
@@ -45,3 +58,4 @@ These items close the gap between market core promise and current public state, 
 - [x] Product journey documented (aligned to ServiceNow / Drata / Anecdotes / JupiterOne closed-loop patterns) + `journey_status` in metrics and API
 - [x] Phased OSCAL Assessment Results export + lightweight static metrics HTML surface
 - [x] Event-driven collection: webhook evidence ingest + poll adapter stub
+- [x] Phase 4.1: inbound evidence merge + dedupe by content hash
