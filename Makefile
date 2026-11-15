@@ -4,7 +4,7 @@ install:
 	pip install -r requirements.txt
 
 test:
-	pytest
+	PYTHONPATH=. pytest -v
 
 run-sample:
-	PYTHONPATH=. python -m archaudit.pipeline policies/controls.yaml samples/audit_pack
+	PYTHONPATH=. python -c "from src.ccm.nodes import run_pipeline; run_pipeline()"
