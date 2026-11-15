@@ -9,6 +9,7 @@ Materiality driven from control pack. Outbound actions policy-gated and explicit
 Journey status surfaced for operator flow.
 OSCAL AR export + lightweight metrics HTML written alongside the audit pack.
 Phase 4.1: inbound evidence (webhook/poll) is loaded and merged with sample evidence, deduplicated by content hash.
+Phase 4.2: previous-state store enables true drift detection against the prior run.
 """
 from __future__ import annotations
 
@@ -39,6 +40,7 @@ INBOUND_DIR = ROOT / "samples" / "inbound"
 AUDIT_PACK_DIR = ROOT / "samples" / "audit_pack"
 EXCEPTIONS_PATH = ROOT / "samples" / "exceptions.json"
 OUTBOUND_DIR = ROOT / "samples" / "outbound"
+PREVIOUS_STATE_PATH = ROOT / "samples" / "previous_state.json"
 
 
 def _load_control_pack() -> list[dict[str, Any]]:
@@ -84,6 +86,32 @@ def _build_evidence_chain(evidence: list[EvidenceRecord]) -> str:
     for h in hashes[1:]:
         current = hashlib.sha256((current + h).encode()).hexdigest()
     return current
+
+
+def _load_previous_state() -> dict[str, dict[str, Any]]:
+    """Load compact previous-run evaluation snapshot (control_id -> status + evaluation_id)."""
+    if not PREVIOUS_STATE_PATH.exists():
+        return {}
+    try:
+        with PREVIOUS_STATE_PATH.open() as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _save_previous_state(evaluations: list[EvaluationResult]) -> None:
+    """Persist compact snapshot for the next run's drift detection."""
+    PREVIOUS_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    snapshot = {
+        ev.control_id: {
+            "status": ev.status,
+            "evaluation_id": ev.evaluation_id,
+            "detail": ev.detail,
+        }
+        for ev in evaluations
+    }
+    with PREVIOUS_STATE_PATH.open("w") as f:
+        json.dump(snapshot, f, indent=2)
 
 
 def _eval_rule(rule: str, data: dict[str, Any]) -> tuple[str, str]:
@@ -252,18 +280,30 @@ def evaluate(state: CCMState, controls: list[dict[str, Any]]) -> CCMState:
 
 
 def drift(state: CCMState, controls: list[dict[str, Any]]) -> CCMState:
-    """Materiality driven from control pack (not hardcoded).
+    """Materiality driven from control pack + comparison against previous run.
 
-    No previous run yet, so drift is informational based on current status + control materiality.
+    Status changes (pass→fail or fail→pass) elevate materiality.
     """
     mat_map = _control_materiality_map(controls)
+    previous = _load_previous_state()
+
     for ev in state.evaluations:
         base = mat_map.get(ev.control_id, "none")
-        # Elevate if fail; otherwise none for this slice
-        materiality = base if ev.status == "fail" else "none"
+        prev = previous.get(ev.control_id, {})
+        prev_status = prev.get("status")
+        prev_eval_id = prev.get("evaluation_id")
+
+        # Elevate on status change or current fail
+        materiality = base
+        if prev_status and prev_status != ev.status:
+            materiality = "material" if base == "none" else base
+        elif ev.status == "fail":
+            materiality = base if base != "none" else "informational"
+
         state.drifts.append(
             DriftFinding(
                 materiality=materiality,  # type: ignore[arg-type]
+                previous_evaluation_id=prev_eval_id,
                 current_evaluation_id=ev.evaluation_id,
             )
         )
@@ -418,6 +458,7 @@ def report(state: CCMState, output_dir: Path | None = None) -> CCMState:
         "emitted_actions": emitted,
         "decision_basis": "deterministic",
         "inbound_evidence_count": sum(1 for e in state.evidence if e.source != "sample"),
+        "previous_run_compared": bool(_load_previous_state()),
     })
     state.metrics["journey_status"] = _journey_status(state.metrics)
 
@@ -445,6 +486,7 @@ def report(state: CCMState, output_dir: Path | None = None) -> CCMState:
         f"- Emitted actions: {emitted}",
         f"- Open exceptions: {open_exceptions}",
         f"- Inbound evidence used: {state.metrics['inbound_evidence_count']}",
+        f"- Previous run compared: {state.metrics['previous_run_compared']}",
         "",
         "## Evaluations",
     ]
@@ -496,6 +538,8 @@ def run_pipeline(
 
     # Persist any changes to exceptions
     _save_exceptions(state.exceptions)
+    # Persist compact previous state for next run's drift
+    _save_previous_state(state.evaluations)
 
     elapsed = time.perf_counter() - t0
     state.metrics["_elapsed_s"] = elapsed
