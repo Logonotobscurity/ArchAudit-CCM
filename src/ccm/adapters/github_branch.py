@@ -5,10 +5,17 @@ When GITHUB_TOKEN is present it can call the real API; otherwise it returns a de
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 from typing import Any
 
-from src.ccm.state import EvidenceRecord, _content_hash
+from src.ccm.state import EvidenceRecord
+
+
+def _content_hash(payload: dict[str, Any]) -> str:
+    raw = json.dumps(payload, sort_keys=True, default=str).encode()
+    return hashlib.sha256(raw).hexdigest()
 
 
 def collect_branch_protection(
