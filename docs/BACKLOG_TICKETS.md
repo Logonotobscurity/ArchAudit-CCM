@@ -18,8 +18,8 @@ These items close the gap between market core promise and current public state, 
 - [x] Regional evidence packs (NG seeded; KE next) as pure YAML data packs (data-protection + local identity constraints).
 - [x] First real adapters (minimum viable): GitHub branch protection / required checks (stub landed; live token path present), one identity source, one simple cloud posture check.
 - [ ] Event-driven collection option (webhook / poll adapters).
-- [ ] OSCAL export of assessment results (phased).
-- [ ] Lightweight dashboard / metrics surface (coverage, TTE, drift, open exceptions).
+- [x] OSCAL export of assessment results (phased) — minimal AR JSON written alongside audit pack.
+- [x] Lightweight dashboard / metrics surface (coverage, TTE, drift, open exceptions) — static HTML generated from metrics.
 
 ## Design Constraints (do not violate)
 
@@ -43,3 +43,4 @@ These items close the gap between market core promise and current public state, 
 - [x] Materiality from control pack + policy-gated outbound action stubs + Kenya overlay + FastAPI surface
 - [x] CI schema validation + GitHub branch-protection adapter stub (offline-safe)
 - [x] Product journey documented (aligned to ServiceNow / Drata / Anecdotes / JupiterOne closed-loop patterns) + `journey_status` in metrics and API
+- [x] Phased OSCAL Assessment Results export + lightweight static metrics HTML surface
