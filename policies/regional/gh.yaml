@@ -1,0 +1,27 @@
+# Regional overlay — Ghana (Data Protection Act 2012, Act 843)
+# Pure data. Loaded optionally alongside the base control pack.
+# Covers security, consent, and emerging expectations around AI processing of personal data.
+
+version: "1.0"
+jurisdiction: GH
+frameworks:
+  - DPA-2012
+  - DPC-Guidance-2026
+
+controls:
+  - id: GH-SECURITY-MEASURES
+    title: Appropriate security measures for personal data
+    rule: "security_measures_implemented == true"
+    note: "Act 843 requires controllers to implement security safeguards appropriate to the risks."
+  - id: GH-CONSENT-RECORDED
+    title: Valid consent obtained and recorded for processing
+    rule: "consent_recorded == true"
+    note: "Primary legal basis under the Act; must be informed and specific."
+  - id: GH-AI-MONITOR
+    title: Continuous monitoring of AI systems that process personal data
+    rule: "ai_continuous_monitoring_enabled == true"
+    note: "DPC has signalled that AI systems processing personal data fall under the Act; continuous monitoring supports accountability while AI-specific rules evolve."
+  - id: GH-CROSS-BORDER
+    title: Cross-border transfers of personal data meet approval or adequacy requirements
+    rule: "cross_border_transfers_approved == true"
+    note: "Transfers outside Ghana require DPC approval or equivalent safeguards under current practice."
