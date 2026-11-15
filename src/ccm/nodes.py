@@ -1,10 +1,11 @@
-"""CCM graph nodes: collect → maybe_skip → evaluate → drift → govern_check → report.
+"""CCM graph nodes: collect → maybe_skip → evaluate → drift → govern_check → emit_actions → report.
 
 Public vertical slice (Ticket 1): deterministic evaluation against sample evidence.
 No hardcoded metrics. Fully offline-replayable.
 
 Ticket 3: exception persistence + dual-control enforcement + decision log.
 Hash-chain: trusted evidence lineage for offline replay and auditor confidence.
+Materiality driven from control pack. Outbound actions policy-gated and explicit (stubs).
 """
 from __future__ import annotations
 
@@ -31,12 +32,17 @@ CONTROLS_PATH = ROOT / "policies" / "controls.yaml"
 EVIDENCE_DIR = ROOT / "samples" / "evidence"
 AUDIT_PACK_DIR = ROOT / "samples" / "audit_pack"
 EXCEPTIONS_PATH = ROOT / "samples" / "exceptions.json"
+OUTBOUND_DIR = ROOT / "samples" / "outbound"
 
 
 def _load_control_pack() -> list[dict[str, Any]]:
     with CONTROLS_PATH.open() as f:
         pack = yaml.safe_load(f)
     return pack.get("controls", [])
+
+
+def _control_materiality_map(controls: list[dict[str, Any]]) -> dict[str, str]:
+    return {c["id"]: c.get("materiality", "none") for c in controls}
 
 
 def _load_evidence_for_control(control_id: str) -> dict[str, Any] | None:
@@ -174,15 +180,53 @@ def evaluate(state: CCMState, controls: list[dict[str, Any]]) -> CCMState:
     return state
 
 
-def drift(state: CCMState) -> CCMState:
-    """Placeholder: no previous run yet → no material drift."""
+def drift(state: CCMState, controls: list[dict[str, Any]]) -> CCMState:
+    """Materiality driven from control pack (not hardcoded).
+
+    No previous run yet, so drift is informational based on current status + control materiality.
+    """
+    mat_map = _control_materiality_map(controls)
     for ev in state.evaluations:
+        base = mat_map.get(ev.control_id, "none")
+        # Elevate if fail; otherwise none for this slice
+        materiality = base if ev.status == "fail" else "none"
         state.drifts.append(
             DriftFinding(
-                materiality="none",
+                materiality=materiality,  # type: ignore[arg-type]
                 current_evaluation_id=ev.evaluation_id,
             )
         )
+    return state
+
+
+def _emit_outbound_actions(state: CCMState) -> CCMState:
+    """Policy-gated explicit outbound stubs.
+
+    Never opaque. Writes payload to samples/outbound/ for replayability.
+    Sets status to emitted on success.
+    """
+    OUTBOUND_DIR.mkdir(parents=True, exist_ok=True)
+    for action in state.actions:
+        if action.status != "pending":
+            continue
+        # Policy gate: only explicit types allowed
+        if action.action_type not in ("webhook", "ticket", "agentbridge_event"):
+            action.status = "suppressed"
+            action.reason = (action.reason or "") + " | policy: unsupported type"
+            continue
+        stub_path = OUTBOUND_DIR / f"{action.action_id}_{action.action_type}.json"
+        payload = {
+            "action_id": action.action_id,
+            "control_id": action.control_id,
+            "action_type": action.action_type,
+            "payload": action.payload,
+            "reason": action.reason,
+            "emitted_at": utcnow().isoformat(),
+        }
+        with stub_path.open("w") as f:
+            json.dump(payload, f, indent=2, default=str)
+        action.status = "emitted"
+        action.emitted_at = utcnow()
     return state
 
 
@@ -191,7 +235,7 @@ def govern_check(state: CCMState) -> CCMState:
 
     - Loads persisted exceptions
     - Enforces dual-control + TTL
-    - Emits suppressed or pending ActionRecord
+    - Emits suppressed or pending ActionRecord (explicit, policy-gated)
     - Writes a decision log entry into state.metrics for the audit pack
     """
     # Reload in case external changes occurred between runs
@@ -239,6 +283,7 @@ def govern_check(state: CCMState) -> CCMState:
                 "reason": "valid exception",
             })
             continue
+        # Explicit action type (policy can later select webhook/ticket/agentbridge)
         state.actions.append(
             ActionRecord(
                 control_id=ev.control_id,
@@ -266,6 +311,7 @@ def report(state: CCMState, output_dir: Path | None = None) -> CCMState:
     open_exceptions = sum(1 for e in state.exceptions if e.status in ("open", "approved"))
     pending_actions = sum(1 for a in state.actions if a.status == "pending")
     suppressed = sum(1 for a in state.actions if a.status == "suppressed")
+    emitted = sum(1 for a in state.actions if a.status == "emitted")
 
     # Evidence hash-chain root for integrity verification on replay
     chain_root = _build_evidence_chain(state.evidence)
@@ -282,6 +328,7 @@ def report(state: CCMState, output_dir: Path | None = None) -> CCMState:
         "open_exceptions": open_exceptions,
         "pending_actions": pending_actions,
         "suppressed_by_exception": suppressed,
+        "emitted_actions": emitted,
         "decision_basis": "deterministic",
     })
 
@@ -305,6 +352,7 @@ def report(state: CCMState, output_dir: Path | None = None) -> CCMState:
         f"- Unknown (no evidence): {state.metrics['evaluations_unknown']}",
         f"- Pending actions: {pending_actions}",
         f"- Suppressed by exception: {suppressed}",
+        f"- Emitted actions: {emitted}",
         f"- Open exceptions: {open_exceptions}",
         "",
         "## Evaluations",
@@ -337,7 +385,7 @@ def run_pipeline(
     output_dir: str | None = None,
     budget_ms: int = 30000,
 ) -> CCMState:
-    """Public entrypoint — deterministic vertical slice + Ticket 3 governance + hash-chain."""
+    """Public entrypoint — deterministic vertical slice + Ticket 3 governance + hash-chain + materiality + outbound stubs."""
     t0 = time.perf_counter()
     state = CCMState()
     # Load persisted exceptions before evaluation
@@ -346,8 +394,9 @@ def run_pipeline(
 
     state = collect(state, controls)
     state = evaluate(state, controls)
-    state = drift(state)
+    state = drift(state, controls)
     state = govern_check(state)
+    state = _emit_outbound_actions(state)
 
     # Persist any changes to exceptions
     _save_exceptions(state.exceptions)
