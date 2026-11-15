@@ -1,0 +1,31 @@
+# Regional overlay — Kenya (Data Protection Act 2019 + ODPC guidance)
+# Pure data. Loaded optionally alongside the base control pack.
+# Aligns with continuous post-deployment monitoring, DPIA for high-risk, privacy by design, and DPO for systematic monitoring.
+
+version: "1.0"
+jurisdiction: KE
+frameworks:
+  - DPA-2019
+  - ODPC-Guidance-2026
+
+controls:
+  - id: KE-AI-MONITOR
+    title: Continuous monitoring of high-risk AI / systematic processing once deployed
+    rule: "ai_continuous_monitoring_enabled == true"
+    note: "ODPC expects continuous post-deployment monitoring for high-risk processing (credit scoring, biometrics, generative platforms)."
+  - id: KE-PRIVACY-BY-DESIGN
+    title: Privacy by design and default implemented for systems processing personal data
+    rule: "privacy_by_design_implemented == true"
+    note: "Section 41: technical and organisational measures, minimisation by default, encryption/pseudonymisation."
+  - id: KE-AI-DPIA
+    title: DPIA completed and recorded before high-risk AI processing
+    rule: "dpia_completed == true"
+    note: "Section 31 + Regulation 49: required for large-scale, biometric, children's data, systematic monitoring of public areas, automated decisions."
+  - id: KE-DPO-DESIGNATED
+    title: DPO designated where core activities involve regular systematic monitoring or sensitive data
+    rule: "dpo_designated == true"
+    note: "Section 24: designation expected for public bodies or systematic monitoring / sensitive categories."
+  - id: KE-BREACH-NOTIFY
+    title: Breach notification process meets 72-hour ODPC and data-subject requirements
+    rule: "breach_notification_process_ready == true"
+    note: "Section 43: notify ODPC within 72 hours; data subjects where real risk of harm."
