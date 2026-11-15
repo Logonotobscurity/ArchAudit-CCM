@@ -42,3 +42,4 @@ These items close the gap between market core promise and current public state, 
 - [x] Evidence hash-chain for trusted lineage on replay
 - [x] Materiality from control pack + policy-gated outbound action stubs + Kenya overlay + FastAPI surface
 - [x] CI schema validation + GitHub branch-protection adapter stub (offline-safe)
+- [x] Product journey documented (aligned to ServiceNow / Drata / Anecdotes / JupiterOne closed-loop patterns) + `journey_status` in metrics and API
